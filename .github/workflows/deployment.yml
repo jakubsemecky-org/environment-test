@@ -128,7 +128,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Use the built-in GITHUB_TOKEN secret
         with:
-          tag_name: ${{ github.ref }} # Use the tag that triggered the workflow
+          tag_name: 1.2.0 # Use the tag that triggered the workflow
           release_name: Release ${{ github.ref }} # Customize the release name
           body: |
             Changes in this release:
