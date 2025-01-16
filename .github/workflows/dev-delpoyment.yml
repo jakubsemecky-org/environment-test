@@ -22,7 +22,6 @@ jobs:
   # Build Artifact
   build:
     uses: ./.github/workflows/build-and-test-artifacts.yml
-    id: build
   # Deploy to DEV
   deploy-to-dev:
     needs: build
