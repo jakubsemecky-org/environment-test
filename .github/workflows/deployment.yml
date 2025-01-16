@@ -34,7 +34,7 @@ jobs:
           COMMIT_HASH=$(git rev-parse --short HEAD)
           TRANSCREATION_API_VERSION=$(jq -r '.version' packages/core/transcreation-api/package.json)
           TRANSCREATION_API_FILENAME="transcreation-api-v${VERSION}-${TIMESTAMP}-${COMMIT_HASH}.zip"
-          echo "::set-output name=transcreation_api_filename::$TRANSCREATION_API_FILENAME"
+          echo "transcreation_api_filename=$TRANSCREATION_API_FILENAME" >> $GITHUB_OUTPUT
           cd packages/core/transcreation-api
           zip -r ../../../../$TRANSCREATION_API_FILENAME .
           echo "Artifact created: $TRANSCREATION_API_FILENAME"
@@ -42,8 +42,8 @@ jobs:
       - name: Upload Transcreation API Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: transcreation-api
-          path: $TRANSCREATION_API_FILENAME
+          name: ${{ steps.tracking-api-artifact.outputs.transcreation_api_filename }}
+          path: ${{ steps.tracking-api-artifact.outputs.transcreation_api_filename }}
           retention-days: 30
           
       # Create a versioned artifact for Tracking API
@@ -54,7 +54,7 @@ jobs:
           COMMIT_HASH=$(git rev-parse --short HEAD)
           TRACKING_API_VERSION=$(jq -r '.version' packages/core/tracking-api/package.json)
           TRACKING_API_FILENAME="tracking-api-v${VERSION}-${TIMESTAMP}-${COMMIT_HASH}.zip"
-          echo "::set-output name=tracking_api_filename::$TRACKING_API_FILENAME"
+          echo "tracking_api_filename=$TRACKING_API_FILENAME" >> $GITHUB_OUTPUT
           cd packages/core/tracking-api/dist
           zip -r ../../../../$TRACKING_API_FILENAME .
           echo "Artifact created: $TRACKING_API_FILENAME"
