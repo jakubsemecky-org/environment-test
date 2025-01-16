@@ -20,8 +20,10 @@ on:
 
 jobs:
   # Build Artifact
-  build:
-    uses: ./.github/workflows/build-and-test-artifacts.yml
+  build_call:
+    runs-on: ubuntu-latest  # Must specify a runner
+    id: build       # ID assigned to the JOB
+    uses: ./.github/workflows/reusable-workflow.yml
   # Deploy to DEV
   deploy-to-dev:
     needs: build
