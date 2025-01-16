@@ -87,7 +87,7 @@ jobs:
           cache: 'npm'
           
       - name: List Artifacts
-        run: echo "${{ toJSON(needs) }}" | jq -r '.[].outputs | to_entries[]'
+        run: echo "${{ toJSON(needs) }}" | jq -r '.[].outputs | to_entries[] | .value'
           
       - name: Transcreation API - Download Artifact
         uses: actions/download-artifact@v4
