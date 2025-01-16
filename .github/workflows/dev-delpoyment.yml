@@ -20,11 +20,12 @@ on:
 
 jobs:
   # Build Artifact
-  build-and-test-artifacts:
+  build:
     uses: ./.github/workflows/build-and-test-artifacts.yml
+    id: build
   # Deploy to DEV
   deploy-to-dev:
-    needs: build-and-test-artifacts
+    needs: build
     runs-on: ubuntu-latest
     #if: github.ref == 'refs/heads/main'  # Only run on pushes to main
     environment:
@@ -45,18 +46,18 @@ jobs:
       - name: Transcreation API - Download Artifact
         uses: actions/download-artifact@v4
         with:
-          name: ${{ needs.build-and-test-artifacts.outputs.transcreation_api_filename }}
+          name: ${{ needs.build.outputs.transcreation_api_filename }}
 
       - name: Transcreation API - Unzip Artifact
-        run: unzip -o ${{ needs.build-and-test-artifacts.outputs.transcreation_api_filename }} -d packages/core/transcreation-api
+        run: unzip -o ${{ needs.build.outputs.transcreation_api_filename }} -d packages/core/transcreation-api
 
       - name: Tracking API - Download Artifact
         uses: actions/download-artifact@v4
         with:
-          name: ${{ needs.build-and-test-artifacts.outputs.tracking_api_filename }}
+          name: ${{ needs.build.outputs.tracking_api_filename }}
 
       - name: Tracking API - Unzip Artifact
-        run: mkdir -p packages/core/tracking-api/dist && unzip -o  ${{ needs.build-and-test-artifacts.outputs.tracking_api_filename }} -d packages/core/tracking-api/dist
+        run: mkdir -p packages/core/tracking-api/dist && unzip -o  ${{ needs.build.outputs.tracking_api_filename }} -d packages/core/tracking-api/dist
 
     #  - name: Login to Azure Subbscription
     #    uses: azure/login@v2
