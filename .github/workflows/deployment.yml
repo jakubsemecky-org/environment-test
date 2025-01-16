@@ -1,0 +1,115 @@
+name: Deployment
+
+on:
+  push:
+    branches:
+      - 'release/*'
+      - 'main'
+      - 'feature/*' # For testing the flow only @TODO delete this condition
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  create-a-release:
+    runs-on: ubuntu-latest
+    steps:
+      # Check out the code from the repository
+      - uses: actions/checkout@v4
+
+      # Setup and cache npm dependencies to speed up future builds
+      - name: Use Node.js 18.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18.x
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      # Create a versioned artifact for Tra API
+      - id: transcreation-api-artifact
+        name: Transcreation API - Version and create an Artifact
+        run: |          
+          TIMESTAMP=$(date +%Y%m%dT%H%M%S)
+          COMMIT_HASH=$(git rev-parse --short HEAD)
+          TRANSCREATION_API_VERSION=$(jq -r '.version' packages/core/transcreation-api/package.json)
+          TRANSCREATION_API_FILENAME="transcreation-api-v${VERSION}-${TIMESTAMP}-${COMMIT_HASH}.zip"
+          echo "::set-output name=transcreation_api_filename::$TRANSCREATION_API_FILENAME"
+          cd packages/core/transcreation-api
+          zip -r ../../../../$TRANSCREATION_API_FILENAME .
+          echo "Artifact created: $TRANSCREATION_API_FILENAME"
+          
+      - name: Upload Transcreation API Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: transcreation-api
+          path: $TRANSCREATION_API_FILENAME
+          retention-days: 30
+          
+      # Create a versioned artifact for Tracking API
+      - id: tracking-api-artifact
+        name: Tracking API - Version and create an Artifact
+        run: |          
+          TIMESTAMP=$(date +%Y%m%dT%H%M%S)
+          COMMIT_HASH=$(git rev-parse --short HEAD)
+          TRACKING_API_VERSION=$(jq -r '.version' packages/core/tracking-api/package.json)
+          TRACKING_API_FILENAME="tracking-api-v${VERSION}-${TIMESTAMP}-${COMMIT_HASH}.zip"
+          echo "::set-output name=tracking_api_filename::$TRACKING_API_FILENAME"
+          cd packages/core/tracking-api/dist
+          zip -r ../../../../$TRACKING_API_FILENAME .
+          echo "Artifact created: $TRACKING_API_FILENAME"
+
+      - name: Upload Tracking API Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.tracking-api-artifact.outputs.tracking_api_filename }}
+          path: ${{ steps.tracking-api-artifact.outputs.tracking_api_filename }}
+          retention-days: 30
+
+
+  deploy-dev:
+    needs: create-a-release
+    runs-on: ubuntu-latest
+    #if: github.ref == 'refs/heads/main'  # Only run on pushes to main
+    environment:
+      name: dev
+      url: ${{ steps.deploy-dev.outputs.webapp-url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js 18.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+          cache: 'npm'
+          
+      - name: Transcreation API - Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.create-a-release.outputs.transcreation_api_filename }}
+
+      - name: Transcreation API - Unzip Artifact
+        run: unzip ${{ needs.create-a-release.outputs.tracking_api_filename }} -d packages/core/transcreation-api
+
+      - name: Tracking API - Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.create-a-release.outputs.tracking_api_filename }}
+
+      - name: Tracking API - Unzip Artifact
+        run: mkdir packages/core/tracking-api/dist && unzip ${{ needs.create-a-release.outputs.tracking_api_filename }} -d packages/core/tracking-api/dist
+
+      - name: Login to Azure Subbscription
+        uses: azure/login@v2
+        with:
+          client-id: ''
+          tenant-id: ''
+          subscription-id: ''
+
+      - name: Azure Web App Deploy (Dev)
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: your-app-name-dev # Replace with your Azure App Service name
+          package: dev-artifact-${{ steps.version.outputs.version }}.zip
+          slot-name: 'Production'
