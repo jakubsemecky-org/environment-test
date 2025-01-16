@@ -12,7 +12,7 @@ on:
   workflow_dispatch: # Allow manual triggering
 
 jobs:
-  create-a-release:
+  build-and-test-artifacts:
     runs-on: ubuntu-latest
     outputs:
       transcreation_api_filename: ${{ steps.transcreation-api-artifact.outputs.transcreation_api_filename }}
@@ -70,8 +70,8 @@ jobs:
           retention-days: 1
 
 
-  deploy-dev:
-    needs: create-a-release
+  deploy-to-dev:
+    needs: build-and-test-artifacts
     runs-on: ubuntu-latest
     #if: github.ref == 'refs/heads/main'  # Only run on pushes to main
     environment:
@@ -86,24 +86,36 @@ jobs:
           node-version: 18.x
           cache: 'npm'
           
-      - name: TEST
-        run: echo "${{ toJSON(needs) }}"
+      - name: List Artifacts
+        run: echo "${{ toJSON(needs) }}" | jq -r '.[].outputs | to_entries[]'
           
       - name: Transcreation API - Download Artifact
         uses: actions/download-artifact@v4
         with:
-          name: ${{ needs.create-a-release.outputs.transcreation_api_filename }}
+          name: ${{ needs.build-and-test-artifacts.outputs.transcreation_api_filename }}
+          
+      - name: List Files
+        run: ls -la
 
       - name: Transcreation API - Unzip Artifact
-        run: unzip ${{ needs.create-a-release.outputs.tracking_api_filename }} -d packages/core/transcreation-api
+        run: unzip ${{ needs.build-and-test-artifacts.outputs.tracking_api_filename }} -d packages/core/transcreation-api
+
+      - name: List Files
+        run: ls -la
 
       - name: Tracking API - Download Artifact
         uses: actions/download-artifact@v4
         with:
-          name: ${{ needs.create-a-release.outputs.tracking_api_filename }}
+          name: ${{ needs.build-and-test-artifacts.outputs.tracking_api_filename }}
+
+      - name: List Files
+        run: ls -la
 
       - name: Tracking API - Unzip Artifact
-        run: mkdir packages/core/tracking-api/dist && unzip ${{ needs.create-a-release.outputs.tracking_api_filename }} -d packages/core/tracking-api/dist
+        run: mkdir packages/core/tracking-api/dist && unzip ${{ needs.build-and-test-artifacts.outputs.tracking_api_filename }} -d packages/core/tracking-api/dist
+
+      - name: List Files
+        run: ls -la
 
       - name: Login to Azure Subbscription
         uses: azure/login@v2
