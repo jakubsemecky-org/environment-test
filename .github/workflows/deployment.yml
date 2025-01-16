@@ -42,8 +42,8 @@ jobs:
       - name: Upload Transcreation API Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ steps.tracking-api-artifact.outputs.transcreation_api_filename }}
-          path: ${{ steps.tracking-api-artifact.outputs.transcreation_api_filename }}
+          name: ${{ steps.transcreation-api-artifact.outputs.transcreation_api_filename }}
+          path: ${{ steps.transcreation-api-artifact.outputs.transcreation_api_filename }}
           retention-days: 30
           
       # Create a versioned artifact for Tracking API
