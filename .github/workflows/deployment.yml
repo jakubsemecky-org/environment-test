@@ -74,6 +74,8 @@ jobs:
     needs: build-and-test-artifacts
     runs-on: ubuntu-latest
     #if: github.ref == 'refs/heads/main'  # Only run on pushes to main
+    permissions:
+      contents: write # Required to create releases
     environment:
       name: dev
       url: ${{ steps.deploy-dev.outputs.webapp-url }}
@@ -105,17 +107,43 @@ jobs:
       - name: Tracking API - Unzip Artifact
         run: mkdir -p packages/core/tracking-api/dist && unzip -o  ${{ needs.build-and-test-artifacts.outputs.tracking_api_filename }} -d packages/core/tracking-api/dist
 
-      - name: Login to Azure Subbscription
-        uses: azure/login@v2
+    #  - name: Login to Azure Subbscription
+    #    uses: azure/login@v2
+    #    with:
+    #      client-id: ''
+    #      tenant-id: ''
+    #      subscription-id: ''
+    #
+    #  - name: Azure Web App Deploy (Dev)
+    #    id: deploy-to-webapp
+    #    uses: azure/webapps-deploy@v3
+    #    with:
+    #      app-name: your-app-name-dev # Replace with your Azure App Service name
+    #      package: dev-artifact-${{ steps.version.outputs.version }}.zip
+    #      slot-name: 'Production'
+          
+      - name: Create Release
+        id: create_release # Important: give this step an ID
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Use the built-in GITHUB_TOKEN secret
         with:
-          client-id: ''
-          tenant-id: ''
-          subscription-id: ''
-
-      - name: Azure Web App Deploy (Dev)
-        id: deploy-to-webapp
-        uses: azure/webapps-deploy@v3
+          tag_name: ${{ github.ref }} # Use the tag that triggered the workflow
+          release_name: Release ${{ github.ref }} # Customize the release name
+          body: |
+            Changes in this release:
+            - ...
+            - ...
+          draft: false # Set to true to create a draft release
+          prerelease: false # Set to true to create a pre-release
+      
+      - name: Upload Release Asset
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          app-name: your-app-name-dev # Replace with your Azure App Service name
-          package: dev-artifact-${{ steps.version.outputs.version }}.zip
-          slot-name: 'Production'
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # Use the upload URL from the previous step
+          asset_path: ${{ needs.build-and-test-artifacts.outputs.tracking_api_filename }} # Path to your zip file
+          asset_name: ${{ needs.build-and-test-artifacts.outputs.tracking_api_filename }} # Name of the asset in the release
+          asset_content_type: application/zip # Set the content type
