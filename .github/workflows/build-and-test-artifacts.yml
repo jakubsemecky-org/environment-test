@@ -1,0 +1,62 @@
+name: Build and Test Artifacts
+
+on:
+  workflow_call:
+
+jobs:
+  build-and-test-artifacts:
+    runs-on: ubuntu-latest
+    outputs:
+      transcreation_api_filename: ${{ steps.transcreation-api-artifact.outputs.transcreation_api_filename }}
+      tracking_api_filename: ${{ steps.tracking-api-artifact.outputs.tracking_api_filename }}
+    steps:
+      # Check out the code from the repository
+      - uses: actions/checkout@v4
+
+      # Setup and cache npm dependencies to speed up future builds
+      - name: Use Node.js 18.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18.x
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      # Create a versioned artifact for Tra API
+      - id: transcreation-api-artifact
+        name: Transcreation API - Version and create an Artifact
+        run: |          
+          TIMESTAMP=$(date +%Y%m%dT%H%M%S)
+          COMMIT_HASH=$(git rev-parse --short HEAD)
+          VERSION=$(jq -r '.version' packages/core/transcreation-api/package.json)
+          TRANSCREATION_API_FILENAME="transcreation-api-v${VERSION}-${TIMESTAMP}-${COMMIT_HASH}.zip"
+          echo "transcreation_api_filename=$TRANSCREATION_API_FILENAME" >> "$GITHUB_OUTPUT"
+          cd packages/core/transcreation-api
+          zip -r ../../../$TRANSCREATION_API_FILENAME .
+          echo "Artifact created: $TRANSCREATION_API_FILENAME"
+          
+      - name: Upload Transcreation API Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.transcreation-api-artifact.outputs.transcreation_api_filename }}
+          path: ${{ steps.transcreation-api-artifact.outputs.transcreation_api_filename }}
+          retention-days: 1
+          
+      # Create a versioned artifact for Tracking API
+      - id: tracking-api-artifact
+        name: Tracking API - Version and create an Artifact
+        run: |          
+          TIMESTAMP=$(date +%Y%m%dT%H%M%S)
+          COMMIT_HASH=$(git rev-parse --short HEAD)
+          VERSION=$(jq -r '.version' packages/core/tracking-api/package.json)
+          TRACKING_API_FILENAME="tracking-api-v${VERSION}-${TIMESTAMP}-${COMMIT_HASH}.zip"
+          echo "tracking_api_filename=$TRACKING_API_FILENAME" >> "$GITHUB_OUTPUT"
+          cd packages/core/tracking-api/dist
+          zip -r ../../../../$TRACKING_API_FILENAME .
+          echo "Artifact created: $TRACKING_API_FILENAME"
+
+      - name: Upload Tracking API Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.tracking-api-artifact.outputs.tracking_api_filename }}
+          path: ${{ steps.tracking-api-artifact.outputs.tracking_api_filename }}
+          retention-days: 1
