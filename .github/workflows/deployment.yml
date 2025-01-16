@@ -32,11 +32,11 @@ jobs:
         run: |          
           TIMESTAMP=$(date +%Y%m%dT%H%M%S)
           COMMIT_HASH=$(git rev-parse --short HEAD)
-          TRANSCREATION_API_VERSION=$(jq -r '.version' packages/core/transcreation-api/package.json)
+          VERSION=$(jq -r '.version' packages/core/transcreation-api/package.json)
           TRANSCREATION_API_FILENAME="transcreation-api-v${VERSION}-${TIMESTAMP}-${COMMIT_HASH}.zip"
           echo "transcreation_api_filename=$TRANSCREATION_API_FILENAME" >> $GITHUB_OUTPUT
           cd packages/core/transcreation-api
-          zip -r ../../../../$TRANSCREATION_API_FILENAME .
+          zip -r ../../../$TRANSCREATION_API_FILENAME .
           echo "Artifact created: $TRANSCREATION_API_FILENAME"
           
       - name: Upload Transcreation API Artifact
@@ -52,7 +52,7 @@ jobs:
         run: |          
           TIMESTAMP=$(date +%Y%m%dT%H%M%S)
           COMMIT_HASH=$(git rev-parse --short HEAD)
-          TRACKING_API_VERSION=$(jq -r '.version' packages/core/tracking-api/package.json)
+          VERSION=$(jq -r '.version' packages/core/tracking-api/package.json)
           TRACKING_API_FILENAME="tracking-api-v${VERSION}-${TIMESTAMP}-${COMMIT_HASH}.zip"
           echo "tracking_api_filename=$TRACKING_API_FILENAME" >> $GITHUB_OUTPUT
           cd packages/core/tracking-api/dist
@@ -82,6 +82,9 @@ jobs:
         with:
           node-version: 18.x
           cache: 'npm'
+          
+      - name: TEST
+        run: echo "${{ toJSON(needs) }}"
           
       - name: Transcreation API - Download Artifact
         uses: actions/download-artifact@v4
