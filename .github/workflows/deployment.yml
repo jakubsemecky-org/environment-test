@@ -76,7 +76,7 @@ jobs:
     #if: github.ref == 'refs/heads/main'  # Only run on pushes to main
     environment:
       name: dev
-      url: ${{ steps.deploy-dev.outputs.webapp-url }}
+      url: https://github.com
     steps:
       - uses: actions/checkout@v4
 
@@ -124,14 +124,13 @@ jobs:
   save-github-release:
     needs: deploy-to-dev
     runs-on: ubuntu-latest
-    #if: github.ref == 'refs/heads/main'  # Only run on pushes to main
     permissions:
       contents: write # Required to create releases
     steps:
-    
+      - uses: actions/checkout@v4
       - name: Create Release
         id: create_release # Important: give this step an ID
-        uses: actions/create-release@v2
+        uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Use the built-in GITHUB_TOKEN secret
         with:
@@ -146,7 +145,7 @@ jobs:
       
       - name: Upload Release Asset
         id: upload-release-asset
-        uses: actions/upload-release-asset@v2
+        uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
