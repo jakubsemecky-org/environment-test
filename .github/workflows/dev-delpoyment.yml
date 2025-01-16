@@ -20,8 +20,8 @@ on:
 
 jobs:
   # Build Artifact
-  build:
-    uses: ./.github/workflows/build-and-test-artifacts
+  build-and-test-artifacts:
+    uses: ./.github/workflows/build-and-test-artifacts.yml
   # Deploy to DEV
   deploy-to-dev:
     needs: build-and-test-artifacts
