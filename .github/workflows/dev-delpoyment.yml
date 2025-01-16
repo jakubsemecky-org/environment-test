@@ -23,7 +23,7 @@ jobs:
   build_call:
     runs-on: ubuntu-latest  # Must specify a runner
     id: build       # ID assigned to the JOB
-    uses: ./.github/workflows/reusable-workflow.yml
+    uses: ./.github/workflows/build-and-test-artifacts.yml
   # Deploy to DEV
   deploy-to-dev:
     needs: build
