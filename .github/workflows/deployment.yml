@@ -103,7 +103,7 @@ jobs:
           name: ${{ needs.build-and-test-artifacts.outputs.tracking_api_filename }}
 
       - name: Tracking API - Unzip Artifact
-        run: mkdir packages/core/tracking-api/dist && unzip -o  ${{ needs.build-and-test-artifacts.outputs.tracking_api_filename }} -d packages/core/tracking-api/dist
+        run: mkdir -p packages/core/tracking-api/dist && unzip -o  ${{ needs.build-and-test-artifacts.outputs.tracking_api_filename }} -d packages/core/tracking-api/dist
 
       - name: Login to Azure Subbscription
         uses: azure/login@v2
