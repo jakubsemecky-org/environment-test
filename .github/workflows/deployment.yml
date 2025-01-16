@@ -14,6 +14,9 @@ on:
 jobs:
   create-a-release:
     runs-on: ubuntu-latest
+    outputs:
+      transcreation_api_filename: ${{ steps.transcreation-api-artifact.outputs.transcreation_api_filename }}
+      tracking_api_filename: ${{ steps.tracking-api-artifact.outputs.tracking_api_filename }}
     steps:
       # Check out the code from the repository
       - uses: actions/checkout@v4
